@@ -1,3 +1,6 @@
+// File: multi_algos_ts.c
+// Implements anomaly detection edge algorithms.
+
 #include <math.h>
 #include <stdlib.h>
 #include <float.h>

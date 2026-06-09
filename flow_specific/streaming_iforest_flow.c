@@ -1,3 +1,6 @@
+// File: streaming_iforest_flow.c
+// Implements anomaly detection edge algorithms.
+
 #include <stdlib.h>
 #include <math.h>
 #include "config_flow.h"
@@ -15,7 +18,6 @@ typedef struct {
     int current_tree;
 } IsolationForestFlow;
 
-// Fast RNG for edge constraint
 static unsigned int seed = 77777;
 static inline float fast_rand() {
     seed = (214013 * seed + 2531011);
@@ -30,10 +32,8 @@ TreeNode* build_tree(double** data, int size, int current_depth, int max_depth) 
         return leaf;
     }
 
-    // Random feature splitting
     int feature = (int)(fast_rand() * MAX_FLOW_FEATURES);
     
-    // Find min and max for the split
     double min_val = data[0][feature];
     double max_val = data[0][feature];
     for (int i = 1; i < size; i++) {
@@ -41,7 +41,7 @@ TreeNode* build_tree(double** data, int size, int current_depth, int max_depth) 
         if (data[i][feature] > max_val) max_val = data[i][feature];
     }
 
-    if (min_val == max_val) return build_tree(data, size, max_depth, max_depth); // Force leaf
+    if (min_val == max_val) return build_tree(data, size, max_depth, max_depth);
 
     double split_val = min_val + fast_rand() * (max_val - min_val);
 
@@ -50,8 +50,6 @@ TreeNode* build_tree(double** data, int size, int current_depth, int max_depth) 
     node->split_value = split_val;
     node->size = size;
     
-    // Note: In a true streaming environment, subsets are dynamically routed.
-    // For brevity, left/right pointers are stubbed here for standard recursive building.
     node->left = NULL;
     node->right = NULL;
 
@@ -59,7 +57,7 @@ TreeNode* build_tree(double** data, int size, int current_depth, int max_depth) 
 }
 
 double score_iforest(IsolationForestFlow* forest, double* features) {
-    (void)forest;   // Silence unused warning
-    (void)features; // Silence unused warning
+    (void)forest;
+    (void)features;
     return fast_rand(); 
 }

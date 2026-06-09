@@ -1,9 +1,12 @@
+// File: metrics_t.c
+// Implements anomaly detection edge algorithms.
+
 #include <stdio.h>
 #include <time.h>
 
 #ifdef _WIN32
     #include <windows.h>
-    #include <psapi.h> // Windows specific process stats
+    #include <psapi.h>
 #else
     #include <sys/resource.h>
 #endif
@@ -13,11 +16,10 @@ void measure_ts_latency(const char* stage) {
     long user_cpu = 0;
 
 #ifdef _WIN32
-    // Windows execution: Read RAM and CPU
     HANDLE hProcess = GetCurrentProcess();
     PROCESS_MEMORY_COUNTERS pmc;
     if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc))) {
-        max_rss = (long)(pmc.PeakWorkingSetSize / 1024); // Convert Bytes to KB
+        max_rss = (long)(pmc.PeakWorkingSetSize / 1024);
     }
     
     FILETIME ftCreation, ftExit, ftKernel, ftUser;
@@ -25,10 +27,9 @@ void measure_ts_latency(const char* stage) {
         ULARGE_INTEGER uli;
         uli.LowPart = ftUser.dwLowDateTime;
         uli.HighPart = ftUser.dwHighDateTime;
-        user_cpu = (long)(uli.QuadPart / 10); // Convert 100-nanosecond intervals to microseconds
+        user_cpu = (long)(uli.QuadPart / 10);
     }
 #else
-    // Linux/Edge execution
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
     max_rss = usage.ru_maxrss;
@@ -41,7 +42,6 @@ void measure_ts_latency(const char* stage) {
 
     FILE* log = fopen("../logs/ts_metrics.csv", "a");
     if(log) {
-        // Output format: Timestamp, Stage, UserCPU_Microseconds, MaxRAM_KB
         fprintf(log, "%.2f,%s,%ld,%ld\n", timestamp, stage, user_cpu, max_rss);
         fclose(log);
     }

@@ -1,3 +1,6 @@
+// File: abod_flow.c
+// Implements anomaly detection edge algorithms.
+
 #include <math.h>
 #include <stdlib.h>
 #include <float.h>
@@ -77,6 +80,5 @@ double compute_abod_score_flow(FlowRecord* records, int target_idx, int num_rows
     double mean = sum_angle / pairs;
     double variance = (sum_angle_sq / pairs) - (mean * mean);
     
-    // ABOD anomaly score is the INVERSE of the variance
     return 1.0 / (variance + 1e-9);
 }

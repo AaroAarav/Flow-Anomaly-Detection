@@ -1,18 +1,18 @@
+// File: lof_flow.c
+// Implements anomaly detection edge algorithms.
+
 #include <math.h>
 #include <stdlib.h>
 #include "config_flow.h"
 
-// Manhattan distance avoids sqrt() and pow(), drastically reducing CPU cycles.
 static inline double manhattan_distance(double* a, double* b) {
     double dist = 0.0;
-    // Vectorized loop capability for modern compilers
     for (int i = 0; i < MAX_FLOW_FEATURES; i++) {
         dist += fabs(a[i] - b[i]);
     }
     return dist;
 }
 
-// Compute Local Reachability Density (LRD)
 double compute_lrd(double distance_matrix[MAX_ROWS][MAX_ROWS], int target_idx, int num_rows) {
     double reach_dist_sum = 0.0;
     int valid_neighbors = 0;
@@ -29,7 +29,6 @@ double compute_lrd(double distance_matrix[MAX_ROWS][MAX_ROWS], int target_idx, i
     return (double)valid_neighbors / reach_dist_sum;
 }
 
-// Compute standard LOF Score
 double compute_lof_score(double* lrd_array, int target_idx, int num_rows) {
     double lrd_ratio_sum = 0.0;
     int valid_neighbors = 0;

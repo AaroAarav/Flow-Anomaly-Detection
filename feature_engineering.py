@@ -1,3 +1,6 @@
+# File: feature_engineering.py
+# Python script for data processing or analysis.
+
 import pandas as pd
 import numpy as np
 import os
@@ -5,46 +8,29 @@ import os
 def process_timedata(input_path, output_path):
     print(f"Processing time series data from {input_path}...")
     
-    # Read the dataset. Zeek logs can have varied columns, so let's read the first row to get columns
     df = pd.read_csv(input_path, low_memory=False)
     
-    # Check if we have the needed columns, or fall back to indices if headers are missing
-    # In timedata.csv, columns are known: 'duration', 'orig_bytes', 'resp_bytes', 'orig_pkts'
-    # From earlier inspection, the headers exist:
-    
-    # Replace Zeek '-' missing values with 0
     cols_to_clean = ['duration', 'orig_bytes', 'resp_bytes', 'orig_pkts']
     for col in cols_to_clean:
         if col in df.columns:
             df[col] = df[col].replace('-', '0')
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     
-    # Extract the necessary columns
     df_engineered = pd.DataFrame()
     df_engineered['duration'] = df['duration']
     
-    # Apply log1p scaling to bytes and packets due to heavy-tail distributions
     df_engineered['orig_bytes_log'] = np.log1p(df['orig_bytes'])
     df_engineered['resp_bytes_log'] = np.log1p(df['resp_bytes'])
     df_engineered['orig_pkts_log'] = np.log1p(df['orig_pkts'])
     
-    # Label array (default 0 for Benign)
     df_engineered['label'] = 0
     
-    # Synthetic Anomaly Injection: Force an anomaly every 20 rows (similar to original C logic)
-    # We will simulate data exfiltration and packet flooding
     anomaly_indices = df_engineered.index[df_engineered.index > 0][(df_engineered.index[df_engineered.index > 0] % 20) == 0]
     
-    # Create the anomaly spike
     df_engineered.loc[anomaly_indices, 'orig_bytes_log'] = np.log1p(df.loc[anomaly_indices, 'orig_bytes'] * 150.0)
     df_engineered.loc[anomaly_indices, 'orig_pkts_log'] = np.log1p(df.loc[anomaly_indices, 'orig_pkts'] * 50.0)
     df_engineered.loc[anomaly_indices, 'label'] = 1
     
-    # Take first 3000 rows if it's larger, based on the MAX_ROWS config
-    # Actually, it's safer to save the whole thing and let C code bound it, or pre-bound it here.
-    # We'll keep the whole file so C can decide MAX_ROWS.
-    
-    # Apply Standardization
     features = ['duration', 'orig_bytes_log', 'resp_bytes_log', 'orig_pkts_log']
     for f in features:
         df_engineered[f] = df_engineered[f].replace([np.inf, -np.inf], np.nan).fillna(0)
@@ -54,27 +40,21 @@ def process_timedata(input_path, output_path):
             std = 1e-6
         df_engineered[f] = (df_engineered[f] - mean) / std
 
-    # Output format expected by new C code: duration, orig_bytes_log, resp_bytes_log, orig_pkts_log, label
     df_engineered = df_engineered[features + ['label']]
     df_engineered.to_csv(output_path, index=False)
     
     print(f"Time series data successfully engineered and saved to {output_path}")
     print(f"Total Rows: {len(df_engineered)}, Anomalies: {df_engineered['label'].sum()}")
 
-
 def process_flowdata(input_path, output_path):
     print(f"Processing flow data from {input_path}...")
     
-    # Read the dataset
     df = pd.read_csv(input_path, low_memory=False)
     
-    # Clean up column names (strip whitespace)
     df.columns = df.columns.str.strip()
     
-    # Required columns
     req_cols = ['Flow Duration', 'Flow Bytes/s', 'SYN Flag Count', 'Average Packet Size']
     
-    # Fallbacks if exact names don't match (CIC-IDS-2017 variation)
     col_map = {
         'Flow Duration': 'Flow Duration',
         'Flow Bytes/s': 'Flow Bytes/s',
@@ -84,34 +64,26 @@ def process_flowdata(input_path, output_path):
     
     df_engineered = pd.DataFrame()
     
-    # 1. Flow Duration (log1p)
     df['Flow Duration'] = pd.to_numeric(df['Flow Duration'], errors='coerce').fillna(0)
     df_engineered['Flow Duration Log'] = np.log1p(df['Flow Duration'])
     
-    # 2. Flow Bytes/s (clean Inf/NaN and log1p)
     df['Flow Bytes/s'] = pd.to_numeric(df['Flow Bytes/s'], errors='coerce')
     df.loc[df['Flow Bytes/s'] < 0, 'Flow Bytes/s'] = 0
     df['Flow Bytes/s'] = df['Flow Bytes/s'].replace([np.inf, -np.inf], np.nan)
     df['Flow Bytes/s'] = df['Flow Bytes/s'].fillna(0)
     df_engineered['Flow Bytes/s Log'] = np.log1p(df['Flow Bytes/s'])
     
-    # 3. SYN Flag Count
     df_engineered['SYN Flag Count'] = pd.to_numeric(df['SYN Flag Count'], errors='coerce').fillna(0)
     
-    # 4. Average Packet Size
     df_engineered['Average Packet Size'] = pd.to_numeric(df['Average Packet Size'], errors='coerce').fillna(0)
     
-    # 5. Labels (0 for BENIGN, 1 for Anomaly)
     label_col = 'Label'
     if label_col not in df.columns and 'label' in df.columns:
         label_col = 'label'
     
-    # Clean labels
     labels = df[label_col].astype(str).str.strip().str.upper()
     df_engineered['Label_Target'] = np.where(labels == 'BENIGN', 0, 1)
     
-    # Now perform Z-score standardization on the 4 features
-    # Ensure no NaN or inf exist
     features = ['Flow Duration Log', 'Flow Bytes/s Log', 'SYN Flag Count', 'Average Packet Size']
     for f in features:
         df_engineered[f] = df_engineered[f].replace([np.inf, -np.inf], np.nan).fillna(0)
@@ -121,14 +93,11 @@ def process_flowdata(input_path, output_path):
             std = 1e-6
         df_engineered[f] = (df_engineered[f] - mean) / std
 
-    # Reorder for the C program: the 4 features + label
     df_engineered = df_engineered[features + ['Label_Target']]
     
-    # Output
     df_engineered.to_csv(output_path, index=False)
     print(f"Flow data successfully engineered and saved to {output_path}")
     print(f"Total Rows: {len(df_engineered)}, Anomalies: {df_engineered['Label_Target'].sum()}")
-
 
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.abspath(__file__))

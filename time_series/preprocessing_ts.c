@@ -1,3 +1,6 @@
+// File: preprocessing_ts.c
+// Implements anomaly detection edge algorithms.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +23,6 @@ int parse_ts_csv(const char* filepath, TSRecord* records) {
     int normal_count = 0;
     int anomaly_count = 0;
 
-    // Skip header
     if (!fgets(line, sizeof(line), file)) return 0;
 
     while (fgets(line, sizeof(line), file)) {
@@ -30,11 +32,11 @@ int parse_ts_csv(const char* filepath, TSRecord* records) {
         int col_idx = 0;
         
         while (token != NULL) {
-            if (col_idx == 0) records[row_count].features[0] = atof(token);  // Duration
-            if (col_idx == 1) records[row_count].features[1] = atof(token);  // Orig_bytes_log
-            if (col_idx == 2) records[row_count].features[2] = atof(token);  // Resp_bytes_log
-            if (col_idx == 3) records[row_count].features[3] = atof(token);  // Orig_pkts_log
-            if (col_idx == 4) records[row_count].label = atoi(token);        // Label
+            if (col_idx == 0) records[row_count].features[0] = atof(token);
+            if (col_idx == 1) records[row_count].features[1] = atof(token);
+            if (col_idx == 2) records[row_count].features[2] = atof(token);
+            if (col_idx == 3) records[row_count].features[3] = atof(token);
+            if (col_idx == 4) records[row_count].label = atoi(token);
             
             token = strtok(NULL, ",");
             col_idx++;

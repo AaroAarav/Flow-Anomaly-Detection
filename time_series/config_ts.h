@@ -1,14 +1,11 @@
 #ifndef CONFIG_TS_H
 #define CONFIG_TS_H
 
-// DATASET CONSTRAINT: STRICTLY LOAD ONLY THE FIRST 3000 ROWS
 #define MAX_ROWS 3000 
 #define MAX_TS_FEATURES 4
 
-// ==========================================
 // HYPERPARAMETER DOCUMENTATION
 // ==========================================
-
 // HYPERPARAMETER:
 // IFOR_NUM_TREES controls the number of trees in the Streaming Isolation Forest.
 // Time-series data often has high variance, requiring more trees to isolate temporal anomalies.
@@ -72,10 +69,10 @@
 #define HW_RESIDUAL_THRESHOLD 2.0
 
 typedef struct {
-    long cpu_time_us;     // Microseconds of CPU time
-    long ram_kb;          // Peak RAM in KB
-    long disk_io_bytes;   // Total bytes read/written to disk
-    double timestamp_ms;  // Monotonic clock for latency
+    long cpu_time_us;
+    long ram_kb;
+    long disk_io_bytes;
+    double timestamp_ms;
 } HardwareStats;
 
-#endif // CONFIG_TS_H
+#endif

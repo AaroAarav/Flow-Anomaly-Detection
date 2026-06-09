@@ -1,3 +1,6 @@
+// File: main_ts.c
+// Implements anomaly detection edge algorithms.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,9 +60,6 @@ int main(int argc, char *argv[]) {
     fprintf(results_csv, "Algorithm,Threshold,TP,FP,TN,FN,Accuracy,Precision,Recall,F1_Score,Latency_ms,CPU_us,Peak_RAM_KB,Disk_IO_Bytes\n");
     printf("\n--- Starting Time Series Hardware Sweep ---\n");
 
-    // ==========================================
-    // 1. HOLT-WINTERS (Tracking Orig_Bytes)
-    // ==========================================
     for (double thresh = 1.0; thresh <= 5.0; thresh += 0.5) {
         HoltWintersTS hw;
         if (loaded_rows > 0) init_hw_ts(&hw, records[0].features[1]); 
@@ -78,9 +78,6 @@ int main(int argc, char *argv[]) {
         evaluate_and_log(results_csv, "Holt-Winters", thresh, tp, fp, tn, fn, test_rows, start_stats, end_stats);
     }
 
-    // ==========================================
-    // 2. ISOLATION FOREST 
-    // ==========================================
     IsolationForestTS forest;
     memset(&forest, 0, sizeof(IsolationForestTS)); 
     for (double thresh = 0.45; thresh <= 0.70; thresh += 0.05) {

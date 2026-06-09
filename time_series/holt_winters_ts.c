@@ -1,3 +1,6 @@
+// File: holt_winters_ts.c
+// Implements anomaly detection edge algorithms.
+
 #include <math.h>
 #include <stdlib.h>
 #include "config_ts.h"
@@ -8,7 +11,6 @@ typedef struct {
     double seasonal[HW_SEASON_LENGTH];
     int season_idx;
     
-    // Rolling stats for adaptive thresholding
     double residual_mean;
     double residual_variance;
     int n_updates;
@@ -26,14 +28,12 @@ void init_hw_ts(HoltWintersTS* hw, double initial_val) {
     hw->n_updates = 0;
 }
 
-// Adaptive anomaly scoring based on residual deviance
 int evaluate_hw_ts_anomaly(HoltWintersTS* hw, double current_val, double threshold) {
     double current_season = hw->seasonal[hw->season_idx];
     double forecast = (hw->level + hw->trend) * current_season;
     
     double residual = fabs(current_val - forecast);
     
-    // Update Welford's online algorithm for residual variance
     hw->n_updates++;
     double delta = residual - hw->residual_mean;
     hw->residual_mean += delta / hw->n_updates;
@@ -42,7 +42,6 @@ int evaluate_hw_ts_anomaly(HoltWintersTS* hw, double current_val, double thresho
     
     double std_dev = sqrt(hw->residual_variance / hw->n_updates);
     
-    // Online state update
     double prev_level = hw->level;
     hw->level = HW_ALPHA * (current_val / current_season) + (1 - HW_ALPHA) * (prev_level + hw->trend);
     hw->trend = HW_BETA * (hw->level - prev_level) + (1 - HW_BETA) * hw->trend;
@@ -50,11 +49,10 @@ int evaluate_hw_ts_anomaly(HoltWintersTS* hw, double current_val, double thresho
 
     hw->season_idx = (hw->season_idx + 1) % HW_SEASON_LENGTH;
 
-    // Check if residual breaches the dynamic threshold
     if (hw->n_updates > HW_SEASON_LENGTH && std_dev > 0) {
         double z_score = residual / std_dev;
-        if (z_score > threshold) return 1; // Anomaly detected
+        if (z_score > threshold) return 1;
     }
     
-    return 0; // Normal
+    return 0;
 }

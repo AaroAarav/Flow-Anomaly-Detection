@@ -1,8 +1,10 @@
+// File: lof_ts.c
+// Implements anomaly detection edge algorithms.
+
 #include <math.h>
 #include <stdlib.h>
 #include "config_ts.h"
 
-// Euclidean distance for precise spatial separation in time-series
 static inline double euclidean_distance(double* a, double* b) {
     double dist = 0.0;
     for (int i = 0; i < MAX_TS_FEATURES; i++) {
@@ -12,14 +14,12 @@ static inline double euclidean_distance(double* a, double* b) {
     return sqrt(dist);
 }
 
-// Compute Local Reachability Density (LRD) in a sliding window context
 double compute_lrd_ts(double distance_matrix[MAX_ROWS][MAX_ROWS], int target_idx, int num_rows) {
     double reach_dist_sum = 0.0;
     int valid_neighbors = 0;
 
     for (int i = 0; i < num_rows; i++) {
         if (i != target_idx) {
-            // Note: K-th distance logic simplified for O(N) streaming performance
             reach_dist_sum += distance_matrix[target_idx][i];
             valid_neighbors++;
             if (valid_neighbors >= LOF_K_NEIGHBORS) break;
@@ -42,6 +42,6 @@ double compute_lof_score_ts(double* lrd_array, int target_idx, int num_rows) {
         }
     }
     
-    if (valid_neighbors == 0) return 1.0; // Base score
+    if (valid_neighbors == 0) return 1.0;
     return lrd_ratio_sum / (double)valid_neighbors;
 }

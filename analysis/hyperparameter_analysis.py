@@ -1,3 +1,6 @@
+# File: hyperparameter_analysis.py
+# Python script for data processing or analysis.
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -10,10 +13,8 @@ def plot_parameter_sweep(csv_path, dataset_name):
 
     df = pd.read_csv(csv_path)
     
-    # Set the visual style
     sns.set_theme(style="whitegrid")
     
-    # Get unique algorithms
     algorithms = df['Algorithm'].unique()
     
     for algo in algorithms:
@@ -21,7 +22,6 @@ def plot_parameter_sweep(csv_path, dataset_name):
         
         plt.figure(figsize=(10, 6))
         
-        # Plot F1, Precision, and Recall against the Threshold
         plt.plot(algo_data['Threshold'], algo_data['F1_Score'], marker='o', label='F1-Score', color='b', linewidth=2)
         plt.plot(algo_data['Threshold'], algo_data['Precision'], marker='s', label='Precision', color='g', linestyle='--')
         plt.plot(algo_data['Threshold'], algo_data['Recall'], marker='^', label='Recall', color='r', linestyle='-.')
@@ -32,7 +32,6 @@ def plot_parameter_sweep(csv_path, dataset_name):
         plt.ylim(-0.05, 1.05)
         plt.legend(loc='lower right')
         
-        # Save the plot
         safe_algo_name = algo.replace(" ", "_").lower()
         output_filename = f'../plots/{dataset_name.lower()}_{safe_algo_name}_sweep.png'
         plt.tight_layout()
@@ -42,7 +41,6 @@ def plot_parameter_sweep(csv_path, dataset_name):
         print(f"[SUCCESS] Saved sweep plot to {output_filename}")
 
 if __name__ == "__main__":
-    # Ensure plots directory exists
     os.makedirs('../plots', exist_ok=True)
     
     print("--- Generating Hyperparameter Sweep Plots ---")

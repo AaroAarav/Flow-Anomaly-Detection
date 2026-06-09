@@ -1,3 +1,6 @@
+# File: compare_algorithms.py
+# Python script for data processing or analysis.
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -9,13 +12,11 @@ def plot_best_f1_comparison(csv_path, dataset_name):
 
     df = pd.read_csv(csv_path)
     
-    # Find the row with the maximum F1-Score for each algorithm
     best_results = df.loc[df.groupby('Algorithm')['F1_Score'].idxmax()]
     
     plt.figure(figsize=(8, 6))
     sns.set_theme(style="whitegrid")
     
-    # Create a bar plot
     ax = sns.barplot(data=best_results, x='Algorithm', y='F1_Score', hue='Algorithm', palette='viridis', legend=False)
     
     plt.title(f'Peak F1-Score Comparison ({dataset_name})', fontsize=14, pad=15)
@@ -23,7 +24,6 @@ def plot_best_f1_comparison(csv_path, dataset_name):
     plt.ylabel('Best F1-Score', fontsize=12)
     plt.ylim(0, 1.1)
     
-    # Add the exact numbers on top of the bars
     for p in ax.patches:
         ax.annotate(format(p.get_height(), '.4f'), 
                     (p.get_x() + p.get_width() / 2., p.get_height()), 
@@ -31,7 +31,6 @@ def plot_best_f1_comparison(csv_path, dataset_name):
                     xytext = (0, 9), 
                     textcoords = 'offset points')
 
-    # Save the plot
     output_filename = f'../plots/{dataset_name.lower()}_best_f1_comparison.png'
     plt.tight_layout()
     plt.savefig(output_filename, dpi=300)

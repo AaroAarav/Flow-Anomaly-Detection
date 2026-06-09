@@ -1,3 +1,6 @@
+// File: preprocessing_flow.c
+// Implements anomaly detection edge algorithms.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,10 +8,8 @@
 
 typedef struct {
     double features[MAX_FLOW_FEATURES];
-    int label; // 0 for normal, 1 for anomaly
+    int label;
 } FlowRecord;
-
-
 
 int parse_flow_csv(const char* filepath, FlowRecord* records) {
     FILE* file = fopen(filepath, "r");
@@ -20,13 +21,11 @@ int parse_flow_csv(const char* filepath, FlowRecord* records) {
     char line[2048];
     int row_count = 0;
     
-    // Balanced Loading Targets
     int normal_count = 0;
     int anomaly_count = 0;
     int target_normal = 2500; 
-    int target_anomaly = MAX_ROWS - target_normal; // 500
+    int target_anomaly = MAX_ROWS - target_normal;
 
-    // Skip header
     if (!fgets(line, sizeof(line), file)) return 0;
 
     while (fgets(line, sizeof(line), file)) {
@@ -35,7 +34,6 @@ int parse_flow_csv(const char* filepath, FlowRecord* records) {
             break; 
         }
 
-        // Temporary storage to evaluate the row before committing to our bounded memory
         double temp_features[MAX_FLOW_FEATURES] = {0};
         int temp_label = 0;
 
@@ -53,7 +51,6 @@ int parse_flow_csv(const char* filepath, FlowRecord* records) {
             col_idx++;
         }
         
-        // BALANCED LOADING LOGIC: Only save if we still need this specific type of traffic
         int should_save = 0;
         if (temp_label == 0 && normal_count < target_normal) {
             normal_count++;
@@ -63,7 +60,6 @@ int parse_flow_csv(const char* filepath, FlowRecord* records) {
             should_save = 1;
         }
 
-        // Commit to main array if it met the criteria
         if (should_save) {
             records[row_count].features[0] = temp_features[0];
             records[row_count].features[1] = temp_features[1];

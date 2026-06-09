@@ -1,3 +1,6 @@
+// File: streaming_iforest_ts.c
+// Implements anomaly detection edge algorithms.
+
 #include <stdlib.h>
 #include <math.h>
 #include "config_ts.h"
@@ -14,7 +17,6 @@ typedef struct {
     TreeNode* trees[IFOR_NUM_TREES];
 } IsolationForestTS;
 
-// Fast deterministic RNG for reproducible edge processing
 static unsigned int ts_seed = 101010;
 static inline float fast_rand_ts() {
     ts_seed = (214013 * ts_seed + 2531011);
